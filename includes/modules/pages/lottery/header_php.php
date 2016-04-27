@@ -11,33 +11,31 @@
   
 
 try { 
-  if (!isset($_SESSION['customer_id']) || !$_SESSION['customer_id']) { 
-          $_SESSION['navigation']->set_snapshot(); 
-          zen_redirect(zen_href_link(FILENAME_LOGIN, '', 'SSL')); 
-      } else { 
-       
-        if (zen_get_customer_validate_session($_SESSION['customer_id']) == false) { 
-          $_SESSION['navigation']->set_snapshot(array('mode' => 'SSL', 'page' => FILENAME_CHECKOUT_SHIPPING)); 
-          zen_redirect(zen_href_link(FILENAME_LOGIN, '', 'SSL')); 
-        } 
-  }
-
+ 
+  $nologin = '0' ;//不登陆抽奖 1 为开启 0位关闭 
   $error = false;
-  //读取每个人抽奖次数
-  $readeverynum = 'Select count(*) as count From zen_prizew_log where customerid = '.$_SESSION['customer_id'];
-  $result =  $db->Execute($readeverynum);
-  if($result->fields['count'] >= 1){
-       echo "<script>alert('Your lucky draw has run out!');</script>";
-  }
-
-
-
+  $ip = zen_get_ip_address();
   if($_POST['action']  == 1){
+    if($_SESSION['customer_id'] == ''){
+        $data['messages'] = 'You have to sign in and participate in the lottery';
+        echo json_encode($data);
+        exit();
+    }     
+/*
+    //读取每个人抽奖次数
+    $readeverynum = 'Select count(*) as count From zen_prizew_log where customerid = '.$_SESSION['customer_id'];
+    $result =  $db->Execute($readeverynum);
 
+    if($result->fields['count'] >= 1){
+        $data['messages'] = 'Your lucky draw has run out!';
+        echo json_encode($data);
+        exit();
+    }*/
+    
     $zen_prize =  "select * from zen_prizew";
     $result =  $db->Execute($zen_prize);
     $k = -1;
-    $nowdate = date("Y-m-d Y:i:s");
+    $nowdate = date("Y-m-d H:i:s");
 
     while(!$result->EOF){
        $k++;
@@ -56,6 +54,9 @@ try {
             'prize' => $result->fields['prize'],
             'v' => $probability,
             'time' =>$result->fields['time'],
+            'type' => $result->fields['type'],
+            'condition' => $result->fields['condition'],
+            'messages' => $result->fields['messages'],
 
         );
         //计算是否还有奖品 
@@ -64,7 +65,8 @@ try {
     }
 
         if($prize_count == 0){
-            echo "<script>alert('Prizes have been drawn!');</script>";
+            $data['messages'] = 'Prizes have been drawn!';
+            echo json_encode($data);
             exit();   
         }
 
@@ -86,21 +88,52 @@ try {
 
         $updateprizenum  = "update zen_prizew set v=v-1 where id =".$prize_id;
         $result =  $db->Execute($updateprizenum);
+        //判断是否是优惠劵  优惠劵直接发放
+        if($res['type'] == 'coupon'){
+              $func  = array(
+                'juanamout' => $res['prize'],
+                'fullcouponf' =>$res['condition'],
+              );
+              $couponreslut = $lottery->virtualgoods($func);
+        }
         if(!$result->EOF){
-            //插入抽奖记录
-            $insert_log_sql = "INSERT INTO `zen_prizew_log` (`drawtime`, `prizew_id`, `customerid`) VALUES ('".$nowdate."', '".$prize_id."', '".$_SESSION['customer_id']."')";
-            $log_result = $db->Execute($insert_log_sql);
-            if(!$log_result->EOF){
-                 $data['prize_name'] = $res['prize'];
-                 $data['prize_site'] = $prize_site;//前端奖项从-1开始
-                 $data['prize_id'] = $prize_id;
-                 echo json_encode($data);
-            }
-            else{
-                 echo '<script>alert("error!");</script>';
-                 exit(); 
-            }
-            
+          if($nologin  == 1){
+                //没有登陆抽奖
+                $insert_log_sql = "INSERT INTO `zen_prizew_log` (`drawtime`, `prizew_id`, `customerid`,`ip`,`log`) VALUES ('".$nowdate."', '".$prize_id."', '0','".$ip."','".$couponreslut."')";
+                $log_result = $db->Execute($insert_log_sql);
+          
+                if(!$log_result->EOF){
+                     $data['prize_name'] = $res['prize'];
+                     $data['prize_site'] = $prize_site;//前端奖项从-1开始
+                     $data['prize_id'] = $prize_id;
+                     $data['prize_alert'] = $res['messages'];
+                     echo json_encode($data);
+                }
+                else{
+                     $data['messages'] = 'error';
+                     echo json_encode($data);
+                     exit(); 
+                }
+
+          }
+          else{
+                //插入抽奖记录
+                $insert_log_sql = "INSERT INTO `zen_prizew_log` (`drawtime`, `prizew_id`, `customerid`,`log`) VALUES ('".$nowdate."', '".$prize_id."', '".$_SESSION['customer_id']."','".$couponreslut."')";
+                $log_result = $db->Execute($insert_log_sql);
+                if(!$log_result->EOF){
+                     $data['prize_name'] = $res['prize'];
+                     $data['prize_site'] = $prize_site;//前端奖项从-1开始
+                     $data['prize_id'] = $prize_id;
+                     $data['prize_alert'] = $res['messages'];
+                     echo json_encode($data);
+                }
+                else{
+                     $data['messages'] = 'error';
+                     echo json_encode($data);
+                     exit(); 
+                }
+          }
+        
         }
       
         zen_exit();

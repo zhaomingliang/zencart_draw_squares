@@ -30,12 +30,12 @@ $mylucky = $db->Execute($log_query);
 
 while (!$mylucky->EOF) {
   $myluckyArray[] = array(
-
   'prizew_id'=>$mylucky->fields['prizew_id'],
   'drawtime'=>$mylucky->fields['drawtime'],
   'id'=>$mylucky->fields['id'],
-  'customerid'=>$addresses->fields['customerid'],
-  'releasestatus'=>$addresses->fields['releasestatus'],
+  'customerid'=>$mylucky->fields['customerid'],
+  'releasestatus'=>$mylucky->fields['releasestatus'],
+  'log'=> $mylucky->fields['log'],
   );
 
   $mylucky->MoveNext();

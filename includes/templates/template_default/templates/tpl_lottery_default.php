@@ -12,18 +12,20 @@
  * @version GIT: $Id: Author: DrByte  Sun Aug 5 20:48:10 2012 -0400 Modified in v1.5.1 $
  */
 ?>
- <div id="lottery">
+<div style="clear: both; line-height: 3em;float: right; width: 100%; text-align: center; font-size: 20px;"><a href="/index.php?main_page=my_lottery">My  Lottery</a></div>
+ <div id="lottery" style="clear:both;">
+ 	
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td class="lottery-unit lottery-unit-0"><img src="/includes/templates/template_default/images/lottery/1.png" /></td>
               <td class="lottery-unit lottery-unit-1"><img src="/includes/templates/template_default/images/lottery/2.png" /></td>
-              <td class="lottery-unit lottery-unit-2"><img src="/includes/templates/template_default/images/lottery/4.png" /></td>
-              <td class="lottery-unit lottery-unit-3"><img src="/includes/templates/template_default/images/lottery/3.png" /></td>
+              <td class="lottery-unit lottery-unit-2"><img src="/includes/templates/template_default/images/lottery/3.png" /></td>
+              <td class="lottery-unit lottery-unit-3"><img src="/includes/templates/template_default/images/lottery/4.png" /></td>
             </tr>
             <tr>
               <td class="lottery-unit lottery-unit-11"><img src="/includes/templates/template_default/images/lottery/7.png" /></td>
               <td colspan="2" rowspan="2"><a href="javascript:void(0);"></a></td>
-              <td class="lottery-unit lottery-unit-4"><img src="/includes/templates/template_default/images/lottery/5.png" /></td>
+              <td class="lottery-unit lottery-unit-4"><img src="/includes/templates/template_default/images/lottery/7.png" /></td>
             </tr>
             <tr>
               <td class="lottery-unit lottery-unit-10"><img src="/includes/templates/template_default/images/lottery/1.png" /></td>
@@ -33,7 +35,7 @@
               <td class="lottery-unit lottery-unit-9"><img src="/includes/templates/template_default/images/lottery/3.png" /></td>
               <td class="lottery-unit lottery-unit-8"><img src="/includes/templates/template_default/images/lottery/6.png" /></td>
               <td class="lottery-unit lottery-unit-7"><img src="/includes/templates/template_default/images/lottery/8.png" /></td>
-              <td class="lottery-unit lottery-unit-6"><img src="/includes/templates/template_default/images/lottery/7.png" /></td>
+              <td class="lottery-unit lottery-unit-6"><img src="/includes/templates/template_default/images/lottery/5.png" /></td>
             </tr>
           </table>
     </div>
@@ -42,17 +44,19 @@
             #lottery table td{width:142px;height:142px;text-align:center;vertical-align:middle;font-size:24px;color:#333;font-index:-999}
             #lottery table td a{width:284px;height:284px;line-height:150px;display:block;text-decoration:none;}
             #lottery table td.active{background-color:#ea0000;}
+			 #lottery  td{padding:0 !important; line-height:0px !important; border-top:0px !important;}
+			 #lottery table{ background: transparent;margin:0px;}
 
     </style> 
     <script type="text/javascript">
             var lottery = {
-                index: 0, //当前转动到哪个位置，起点位置
-                count: 0, //总共有多少个位置
-                timer: 0, //setTimeout的ID，用clearTimeout清除
-                speed: 20, //初始转动速度
-                times: 0, //转动次数
-                cycle: 50, //转动基本次数：即至少需要转动多少次再进入抽奖环节
-                prize: 0, //中奖位置
+                index: 0, 
+                count: 0, 
+                timer: 0, 
+                speed: 20, 
+                times: 0, 
+                cycle: 50, 
+                prize: 0, 
                 init: function(id) {
                     if ($("#" + id).find(".lottery-unit").length > 0) {
                         $lottery = $("#" + id);
@@ -88,7 +92,8 @@
                 if (lottery.times > lottery.cycle + 10 && lottery.index == prize_site) {
                     var prize_id = $("#lottery").attr("prize_id");
                     var prize_name = $("#lottery").attr("prize_name");
-                    alert("前端中奖位置："+prize_site+"\n"+"中奖名称："+prize_name+"\n中奖id："+prize_id)
+					var prize_alert = $("#lottery").attr("prize_alert");
+                    alert(prize_alert)
                     clearTimeout(lottery.timer);
                     lottery.prize = -1;
                     lottery.times = 0;
@@ -125,10 +130,17 @@
                     } else {
                         lottery.speed = 100;
                         $.post("/index.php?main_page=lottery", {action:1,securityToken:"<?Php echo $_SESSION['securityToken'] ?>"}, function(data) { //获取奖品，也可以在这里判断是否登陆状态
-                            $("#lottery").attr("prize_site", data.prize_site);
-                            $("#lottery").attr("prize_id", data.prize_id);
-                            $("#lottery").attr("prize_name", data.prize_name);
-                            roll();
+                            if(data.messages=='' || data.messages==undefined || data.messages==null){
+								   $("#lottery").attr("prize_site", data.prize_site);
+                            	   $("#lottery").attr("prize_id", data.prize_id);
+                           		   $("#lottery").attr("prize_name", data.prize_name);
+								   $("#lottery").attr("prize_alert", data.prize_alert);
+							}
+							else{
+								alert(data.messages);
+								return false;
+							}
+							roll();
                             click = true;
                             return false;
                         }, "json")
