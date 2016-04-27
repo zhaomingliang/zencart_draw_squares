@@ -13,7 +13,7 @@
 try { 
  
   $nologin = '0' ;//不登陆抽奖 1 为开启 0位关闭 
-  $error = false;
+ // $error = false;
   $ip = zen_get_ip_address();
   if($_POST['action']  == 1){
     if($_SESSION['customer_id'] == ''){
@@ -21,7 +21,7 @@ try {
         echo json_encode($data);
         exit();
     }     
-/*
+
     //读取每个人抽奖次数
     $readeverynum = 'Select count(*) as count From zen_prizew_log where customerid = '.$_SESSION['customer_id'];
     $result =  $db->Execute($readeverynum);
@@ -30,7 +30,7 @@ try {
         $data['messages'] = 'Your lucky draw has run out!';
         echo json_encode($data);
         exit();
-    }*/
+    }
     
     $zen_prize =  "select * from zen_prizew";
     $result =  $db->Execute($zen_prize);
@@ -56,7 +56,7 @@ try {
             'time' =>$result->fields['time'],
             'type' => $result->fields['type'],
             'condition' => $result->fields['condition'],
-            'messages' => $result->fields['messages'],
+            'messages' => $result->fields['message'],
 
         );
         //计算是否还有奖品 
@@ -112,7 +112,6 @@ try {
                 else{
                      $data['messages'] = 'error';
                      echo json_encode($data);
-                     exit(); 
                 }
 
           }
@@ -130,7 +129,6 @@ try {
                 else{
                      $data['messages'] = 'error';
                      echo json_encode($data);
-                     exit(); 
                 }
           }
         
